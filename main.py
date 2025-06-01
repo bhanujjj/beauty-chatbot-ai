@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import requests
@@ -20,6 +22,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/favicon.ico")
+async def favicon():
+    return {"status": "no favicon"}  # Simple response to avoid 404
 
 @app.get("/")
 async def root():
