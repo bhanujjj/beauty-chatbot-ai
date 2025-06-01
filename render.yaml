@@ -9,5 +9,5 @@ services:
         value: 3.9.0
     buildFilter:
       paths:
-      - main.py
+      - "app/**/*.py"
       - requirements.txt 
