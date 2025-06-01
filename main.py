@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import requests
@@ -12,7 +11,12 @@ import json
 # Load environment variables from .env file
 load_dotenv()
 
-app = FastAPI()
+# Initialize FastAPI with explicit configuration
+app = FastAPI(
+    title="Beauty Chatbot AI",
+    description="AI-powered beauty product recommendation system",
+    version="1.0.0"
+)
 
 # Configure CORS
 app.add_middleware(
@@ -23,27 +27,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/favicon.ico")
-async def favicon():
-    return {"status": "no favicon"}  # Simple response to avoid 404
-
-@app.get("/")
+@app.get("/", response_class=JSONResponse)
 async def root():
-    return {
+    """Root endpoint returning API status"""
+    return JSONResponse(content={
         "status": "online",
         "message": "Beauty Chatbot AI Backend is running",
+        "version": "1.0.0",
         "endpoints": {
             "chat": "/chat",
             "health": "/health"
         }
-    }
+    })
 
-@app.get("/health")
+@app.get("/health", response_class=JSONResponse)
 async def health_check():
-    return {
+    """Health check endpoint"""
+    return JSONResponse(content={
         "status": "healthy",
         "api_key_configured": bool(OPENROUTER_API_KEY)
-    }
+    })
+
+@app.get("/favicon.ico", response_class=PlainTextResponse)
+async def favicon():
+    """Handle favicon requests"""
+    return PlainTextResponse("")
+
+@app.get("/apple-touch-icon.png", response_class=PlainTextResponse)
+@app.get("/apple-touch-icon-precomposed.png", response_class=PlainTextResponse)
+async def apple_touch_icon():
+    """Handle Apple touch icon requests"""
+    return PlainTextResponse("")
 
 # Load OpenRouter API key from environment
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
@@ -187,5 +201,12 @@ async def chat(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv('PORT', 8000))  # Use PORT from environment or default to 8000
-    uvicorn.run(app, host="0.0.0.0", port=port) 
+    port = int(os.getenv('PORT', 8000))
+    print(f"Starting server on port {port}")
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True if os.getenv('ENV') == 'development' else False,
+        workers=1
+    ) 
