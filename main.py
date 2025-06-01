@@ -21,6 +21,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "Beauty Chatbot AI Backend is running",
+        "endpoints": {
+            "chat": "/chat",
+            "health": "/health"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "api_key_configured": bool(OPENROUTER_API_KEY)
+    }
+
 # Load OpenRouter API key from environment
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 if not OPENROUTER_API_KEY:
