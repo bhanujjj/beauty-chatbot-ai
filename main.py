@@ -11,52 +11,52 @@ import json
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize FastAPI with explicit configuration
+# Initialize FastAPI app
 app = FastAPI(
     title="Beauty Chatbot AI",
     description="AI-powered beauty product recommendation system",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins during development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/", response_class=JSONResponse)
-async def root():
-    """Root endpoint returning API status"""
-    return JSONResponse(content={
+@app.get("/")
+def read_root():
+    return {
         "status": "online",
         "message": "Beauty Chatbot AI Backend is running",
         "version": "1.0.0",
         "endpoints": {
             "chat": "/chat",
-            "health": "/health"
+            "health": "/health",
+            "docs": "/docs"
         }
-    })
+    }
 
-@app.get("/health", response_class=JSONResponse)
-async def health_check():
-    """Health check endpoint"""
-    return JSONResponse(content={
+@app.get("/health")
+def health_check():
+    return {
         "status": "healthy",
-        "api_key_configured": bool(OPENROUTER_API_KEY)
-    })
+        "api_key_configured": bool(OPENROUTER_API_KEY),
+        "environment": os.getenv("ENV", "production")
+    }
 
-@app.get("/favicon.ico", response_class=PlainTextResponse)
-async def favicon():
-    """Handle favicon requests"""
+@app.get("/favicon.ico")
+def favicon():
     return PlainTextResponse("")
 
-@app.get("/apple-touch-icon.png", response_class=PlainTextResponse)
-@app.get("/apple-touch-icon-precomposed.png", response_class=PlainTextResponse)
-async def apple_touch_icon():
-    """Handle Apple touch icon requests"""
+@app.get("/apple-touch-icon.png")
+@app.get("/apple-touch-icon-precomposed.png")
+def apple_touch_icon():
     return PlainTextResponse("")
 
 # Load OpenRouter API key from environment
@@ -197,16 +197,4 @@ async def chat(request: ChatRequest):
         print(f"Error in chat endpoint: {str(e)}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv('PORT', 8000))
-    print(f"Starting server on port {port}")
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True if os.getenv('ENV') == 'development' else False,
-        workers=1
-    ) 
+        raise HTTPException(status_code=500, detail=str(e)) 
