@@ -59,6 +59,10 @@ def favicon():
 def apple_touch_icon():
     return PlainTextResponse("")
 
+@app.head("/")
+def head_root():
+    return JSONResponse(status_code=200)
+
 # --- AI chat and product recommendation logic ---
 
 # Sample product data
