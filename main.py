@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
@@ -61,7 +61,7 @@ def apple_touch_icon():
 
 @app.head("/")
 def head_root():
-    return JSONResponse(status_code=200)
+    return Response(status_code=200)
 
 # --- AI chat and product recommendation logic ---
 
