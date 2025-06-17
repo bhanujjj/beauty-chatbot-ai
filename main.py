@@ -100,17 +100,21 @@ async def get_ai_response(message: str, chat_history: List[ChatMessage], product
         system_message = f"""You are a helpful beauty advisor. Follow these strict formatting rules:
 
 1. Keep responses to 2-3 lines maximum for the main recommendation
-2. When recommending products, use this format:
+2. When recommending products, use this exact format:
 
-[Product Recommendation]
-[Leave a blank line]
+I recommend the {product_name}.
+
 **REASON:**
-[1-2 lines explaining why, focusing on user's needs]
+Brief explanation focusing on user's needs (1-2 lines max).
+
+Would you like to know more?
 
 3. Use this product information: {product_context}
 4. Reference previous conversations when relevant
 5. Keep responses focused and concise
-6. In end ask for any other questions"""
+6. Never use brackets [] or underscores _
+7. Maintain conversation context for better assistance
+8. In end ask for any other questions"""
 
         # Prepare messages with limited history
         messages = [{"role": "system", "content": system_message}]
