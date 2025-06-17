@@ -81,6 +81,7 @@ products = [
 class ChatMessage(BaseModel):
     role: str
     content: str
+    timestamp: Optional[float] = None  # Add timestamp for message ordering
 
 class ChatRequest(BaseModel):
     message: str
@@ -88,29 +89,52 @@ class ChatRequest(BaseModel):
 
 async def get_ai_response(message: str, chat_history: List[ChatMessage], product_context: str) -> str:
     """Get AI response with product context"""
-    OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
-    OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-    if not OPENROUTER_API_KEY:
-        return "API key not configured."
-    system_message = f"""You are a helpful beauty advisor. When recommending products, use this product information:\n{product_context}\nKeep responses concise and focused on the user's question. If recommending products, explain why they would be good for the user's needs."""
-    messages = [{"role": "system", "content": system_message}]
-    messages.extend([{"role": msg.role, "content": msg.content} for msg in chat_history])
-    messages.append({"role": "user", "content": message})
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "http://localhost:3000",
-        "Content-Type": "application/json"
-    }
-    request_data = {
-        "model": "mistralai/mistral-7b-instruct",
-        "messages": messages,
-        "max_tokens": 250
-    }
-    response = requests.post(OPENROUTER_URL, headers=headers, json=request_data)
-    response_data = response.json()
-    if response.status_code != 200 or "error" in response_data:
-        return f"AI error: {response_data.get('error', {}).get('message', 'Unknown error')}"
-    return response_data["choices"][0]["message"]["content"]
+    try:
+        OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+        OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+        
+        if not OPENROUTER_API_KEY:
+            return "API key not configured."
+
+        # Create system message with context awareness
+        system_message = f"""You are a helpful beauty advisor. When recommending products:
+1. Use this product information: {product_context}
+2. Reference previous conversations when relevant
+3. Keep responses focused on the user's needs
+4. Maintain conversation context for better assistance"""
+
+        # Prepare messages with limited history
+        messages = [{"role": "system", "content": system_message}]
+        
+        # Use last 5 messages for context
+        recent_history = chat_history[-5:] if len(chat_history) > 5 else chat_history
+        messages.extend([{"role": msg.role, "content": msg.content} for msg in recent_history])
+        messages.append({"role": "user", "content": message})
+
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "HTTP-Referer": "http://localhost:3000",
+            "Content-Type": "application/json"
+        }
+        
+        request_data = {
+            "model": "mistralai/mistral-7b-instruct",
+            "messages": messages,
+            "max_tokens": 250
+        }
+
+        response = requests.post(OPENROUTER_URL, headers=headers, json=request_data)
+        response_data = response.json()
+
+        if response.status_code != 200 or "error" in response_data:
+            error_msg = response_data.get("error", {}).get("message", "Unknown error")
+            return f"I apologize, but I encountered an error: {error_msg}"
+
+        return response_data["choices"][0]["message"]["content"]
+
+    except Exception as e:
+        print(f"Error in AI response: {str(e)}")
+        return f"I apologize, but I encountered an error: {str(e)}"
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
