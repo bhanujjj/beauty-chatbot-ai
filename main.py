@@ -102,7 +102,7 @@ async def get_ai_response(message: str, chat_history: List[ChatMessage], product
 1. Keep responses to 2-3 lines maximum for the main recommendation
 2. When recommending products, use this exact format:
 
-I recommend the {product_name}.
+I recommend the [product name].
 
 **REASON:**
 Brief explanation focusing on user's needs (1-2 lines max).
